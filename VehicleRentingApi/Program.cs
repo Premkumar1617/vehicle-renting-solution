@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using VehicleRentingApi.Data;
+using VehicleRentingApi.DTO;
 using VehicleRentingApi.Entities;
 
 namespace VehicleRentingApi
@@ -137,7 +138,18 @@ namespace VehicleRentingApi
                 await db.SaveChangesAsync();
                 return Results.Created($"/bookings/{booking.BookingId}", booking);
             }).RequireAuthorization();
-
+            app.MapGet("/bookings", async ([FromServices] AppDbContext db) =>
+            {
+                var list = db.RentalCarBookings.Join(db.RentalCars, rc => rc.CarId, c => c.CarId, (rc, c) => new BookingDTO()
+                {
+                    BookingDate=rc.BookingDate,
+                    BookingId=rc.BookingId,
+                    CarId=rc.CarId,
+                    CarImage=c.CarImage,
+                    RegNo=c.RegNo,
+                }).ToList();
+                return list;
+            });
             app.Run();
         }
     }
